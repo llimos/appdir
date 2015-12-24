@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+{% set activeMenu = 'server' %}
+{% block title %}{{server.name}} :: {{parent()}}{% endblock %}
+
+{% block javascripts %}
+{{parent()}}
+
+<script type="text/javascript">
+    var server = {{ server|json_encode|raw }};
+</script>
+
+<script type="text/babel" defer="defer">
+    ReactDOM.render(<PageHeader title={app.name} label={app.type} button={function(){}} subtitle={app.info}/>, document.getElementById('page-header'));
+    ReactDOM.render(<AppInfo app={app}/>, document.getElementById('page-content'));
+</script>
+
+{% endblock %}

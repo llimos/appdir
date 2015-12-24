@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+{% set activeMenu = 'server' %}
+{% block title %}Servers :: {{parent()}}{% endblock %}
+
+{% block javascripts %}
+{{parent()}}
+
+<script type="text/javascript">
+    var servers = {{ servers|json_encode|raw }};
+</script>
+
+<script type="text/babel">
+    ReactDOM.render(<PageHeader title="Servers"/>, document.getElementById('page-header'));
+    ReactDOM.render(<ServerList servers={servers}/>, document.getElementById('page-content'));
+</script>
+
+{% endblock %}

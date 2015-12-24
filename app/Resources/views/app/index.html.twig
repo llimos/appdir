@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+{% set activeMenu = 'app' %}
+{% block title %}Apps :: {{parent()}}{% endblock %}
+
+{% block javascripts %}
+{{parent()}}
+
+<script type="text/javascript">
+    var apps = {{ apps|json_encode|raw }};
+</script>
+
+<script type="text/babel">
+    ReactDOM.render(<PageHeader title="Apps"/>, document.getElementById('page-header'));
+    ReactDOM.render(<AppList apps={apps}/>, document.getElementById('page-content'));
+</script>
+
+{% endblock %}
