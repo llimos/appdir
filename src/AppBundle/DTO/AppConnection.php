@@ -34,7 +34,7 @@ class AppConnection
             $childExpand = Utils::getChildExpand($expand, 'server_app');
             $this->server_app = new App($connection->getServerApp(), $childExpand);
         } else {
-            $this->server_app = $connection->getClientApp()->getId();
+            $this->server_app = $connection->getServerApp()->getId();
         }
     }
 }

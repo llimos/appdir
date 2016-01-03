@@ -17,7 +17,7 @@ class Server
     {
         $this->id = $server->getId();
         $this->name = $server->getName();
-        $this->type = $server->getIp();
+        $this->ip = $server->getIp();
         $this->info = $server->getInfo();
         
         foreach ($server->getDeployments() as $deployment) {

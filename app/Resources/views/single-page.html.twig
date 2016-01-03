@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta http-equiv="x-ua-compatible" content="ie=edge" />
+        <title>Application Directory</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha.2/css/bootstrap.css" />
+        <style type="text/css">
+            
+            #page-content, #page-header {
+                transition: transform 150ms ease-out, opacity 150ms ease-out;
+                -webkit-transition: -webkit-transform 150ms ease-out, opacity 150ms ease-out;
+            }
+            #page-content.transition {
+                transform: translateY(-50%) scaleY(0);
+                -webkit-transform: translateY(-50%) scaleY(0);
+                opacity: 0;
+            }
+            #page-header.transition {
+                opacity: 0;
+            }
+            a.unlink { color: inherit; }
+        </style>
+        <link rel="icon" type="image/x-icon" href="{{ asset('connections.png') }}" />
+        {% block javascripts %}
+        <script type="text/javascript">{{ render(controller('AppBundle:Default:data')) }}</script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha.2/js/bootstrap.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.4/react.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.4/react-dom.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/page.js/1.6.4/page.min.js"></script>
+        <script type="text/javascript">page.base( "{{ path('singlePage') }}".slice(0, -1) );</script>
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>
+        <script type="text/babel" src="{{asset('js/react-components.es6')}}"></script>
+        <script type="text/babel" src="{{asset('js/router.es6')}}"></script>
+        <!--<script src="{{asset('js/compiled.js')}}"></script>-->
+        {% endblock %}
+    </head>
+    <body>
+        <header>
+            <div id="nav-bar"></div>
+            <div class="jumbotron jumbotron-fluid">
+                <div class="container">
+                    <div id="page-header"></div>
+                </div>
+            </div>
+        </header>
+        <div class="container">
+            <div id="page-content"></div>
+        </div>
+        <footer class="bg-success text-muted m-t-2">
+            <div class="container p-y-3">
+                &copy; 2015 Nu Mark Innovations
+            </div>
+        </footer>
+    </body>
+</html>
