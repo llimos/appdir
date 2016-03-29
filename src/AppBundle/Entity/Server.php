@@ -32,7 +32,7 @@ class Server
      */
     protected $deployments;
     
-    public function __construct($name, $hostname = null, $ip = null, $info = null)
+    public function __construct($name = null, $hostname = null, $ip = null, $info = null)
     {
         $this->name = $name;
         $this->hostname = $hostname;

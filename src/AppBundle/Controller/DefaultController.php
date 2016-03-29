@@ -2,9 +2,13 @@
 
 namespace AppBundle\Controller;
 
+use AppBundle\Entity\App;
+use AppBundle\Entity\Server;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
+use AppBundle\Form\AppType;
+use AppBundle\Form\ServerType;
 
 class DefaultController extends Controller
 {
@@ -26,15 +30,28 @@ class DefaultController extends Controller
         
         // Render the template (which has extra JS to map the objects)
         return $this->render('default/data.js.twig', array(
-            'data' => $data
+            'data' => $data,
+            'templates' => [
+                'app' => new \AppBundle\DTO\App(new \AppBundle\Entity\App),
+                'server' => new \AppBundle\DTO\Server(new \AppBundle\Entity\Server),
+            ]
         ));
     }
-    
-    /**
-     * @Route("/{url}", name="singlePage", defaults={"url"="index"}, requirements={"url"=".+"}) Match everything
-     */
+
     public function singlePageAction()
     {
         return $this->render('single-page.html.twig');
+    }
+
+    /**
+     * Returns a React representation of the forms
+     */
+    public function formsAction()
+    {
+        $forms = [
+            'app' => $this->createForm(AppType::class, new App)->createView(),
+            'server' => $this->createForm(ServerType::class, new Server)->createView()
+        ];
+        return $this->render('default/forms.jsx.twig', ['forms' => $forms, 'form'=>$forms['app']]);
     }
 }

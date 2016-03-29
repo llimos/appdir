@@ -5,6 +5,7 @@ namespace AppBundle\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
+
 /**
  * @ORM\Entity
  */
@@ -48,14 +49,14 @@ class App
      */
     protected $inboundConnections;
     
-    public function __construct($name, $type = self::TYPE_INTERNAL, $info = null)
+    public function __construct($name = null, $type = self::TYPE_INTERNAL, $info = null)
     {
         $this->name = $name;
         $this->type = $type;
         $this->info = $info;
         $this->deployments = new ArrayCollection;
         $this->connections = new ArrayCollection;
-        $this->inbound = new ArrayCollection;
+        $this->inboundConnections = new ArrayCollection;
     }
     
     public function getId()

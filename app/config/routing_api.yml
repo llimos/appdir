@@ -1,0 +1,28 @@
+#REST API routes
+api_app:
+    type: rest
+    resource: AppBundle\Controller\AppController
+    name_prefix: api_
+
+#api_server:
+#    type: rest
+#    resource: AppBundle\Controller\ServerController
+#    name_prefix: api_
+#
+#api_deployment:
+#    type: rest
+#    resource: AppBundle\Controller\DeploymentController
+#    parent: app
+#    name_prefix: api_
+#
+#api_app_connection:
+#    type: rest
+#    resource: AppBundle\Controller\AppConnectionController
+#    parent: app
+#    name_prefix: api_
+#
+#api_deployment_connection:
+#    type: rest
+#    resource: AppBundle\Controller\DeploymentConnectionController
+#    parent: deployment
+#    name_prefix: api_

@@ -1,49 +1,86 @@
-var app = app || {};
-app.data = {{ data|json_encode|raw }};
+window.app = (function() {
+    let appdir = {};
+    appdir.class = {};
 
-// Map everything
-let map = {
-    app: {
-        deployments: "deployment",
-        connections: "appConnection",
-        inbound_connections: "appConnection",
-    },
-    deployment: {
-        app: "app",
-        connections: "deploymentConnection",
-        inbound_connections: "deploymentConnection",
-        servers: "server"
-    },
-    server: {
-        deployments: "deployment"
-    },
-    appConnection: {
-        client_app: "app",
-        server_app: "app"
-    },
-    deploymentConnection: {
-        client_deployment: "deployment",
-        server_deployment: "deployment",
-        connection: "appConnection"
+    // Define the master prototype
+    let DataObject = function(template){
+        for (let p in template) {
+            Object.defineProperty(this, p, {
+                writable: true,
+                enumerable: true,
+                value: template[p]
+            });
+        };
+    };
+    DataObject.prototype = {
+        init : function init(data) {
+            for (let key in data) {
+                if (key in this) {
+                    this[key] = data[key];
+                }
+            }
+        }
+    };
+
+    // Define the actual types
+    {% for typename, type in templates %}
+    appdir.class.{{ typename }} = function {{ typename | capitalize }}(data){ this.init(data); };
+    appdir.class.{{ typename }}.prototype = new DataObject({{ type|json_encode|raw }});
+    {% endfor %}
+
+    let data = {{ data|json_encode|raw }};
+
+    // Map everything
+    let map = {
+        app: {
+            deployments: "deployment",
+            connections: "appConnection",
+            inbound_connections: "appConnection",
+        },
+        deployment: {
+            app: "app",
+            connections: "deploymentConnection",
+            inbound_connections: "deploymentConnection",
+            servers: "server"
+        },
+        server: {
+            deployments: "deployment"
+        },
+        appConnection: {
+            client_app: "app",
+            server_app: "app"
+        },
+        deploymentConnection: {
+            client_deployment: "deployment",
+            server_deployment: "deployment",
+            connection: "appConnection"
+        }
     }
-}
 
-for (type in app.data) {
-    let entities = app.data[type];
-    let entityMap = map[type];
-    for (entityId in entities) {
-        entity = entities[entityId];
-        for (mapType in entityMap) {
-            let mappedEntity = app.data[entityMap[mapType]];
-            if (entity[mapType]) {
-                if (entity[mapType] instanceof Array) {
-                    for (let i=0; i<entity[mapType].length; i++) {
-                        entity[mapType][i] = mappedEntity[entity[mapType][i]];
+    for (let type in data) {
+        let entities = data[type];
+        let entityMap = map[type];
+        for (entityId in entities) {
+            // Wrap in object
+            if (appdir.class[type]) {
+                entities[entityId] = new appdir.class[type](entities[entityId]);
+            }
+            entity = entities[entityId];
+            for (mapType in entityMap) {
+                let mappedEntity = data[entityMap[mapType]];
+                if (entity[mapType]) {
+                    if (entity[mapType] instanceof Array) {
+                        for (let i = 0; i < entity[mapType].length; i++) {
+                            entity[mapType][i] = mappedEntity[entity[mapType][i]];
+                        }
+                    } else {
+                        entity[mapType] = mappedEntity[entity[mapType]];
                     }
-                } else {
-                    entity[mapType] = mappedEntity[entity[mapType]];
                 }
             }
         }
     }
-}
+
+    appdir.data = data;
+    return appdir;
+})();

@@ -1,3 +1,42 @@
+# API routes
+api:
+    type: rest
+    prefix: /api
+    resource: routing_api.yml
+    options: {expose: true}
+
+# Data route
+appdata:
+    path: /appdata
+    defaults:
+        _controller: AppBundle:Default:data
+
+fos_js_routing:
+    resource: "@FOSJsRoutingBundle/Resources/config/routing/routing.xml"
+
+# Forms in React
+forms:
+    path: /forms.jsx
+    defaults:
+        _controller: AppBundle:Default:forms
+
+# Routes for pages within the app. Used only for the JS router
+# since they all go to the single-page app which has the catch-all
 app:
-    resource: "@AppBundle/Controller/"
-    type:     annotation
+    path: /app/{id}
+    defaults: {_controller: AppBundle:Default:singlePage, id: null}
+    options: {expose: true}
+server:
+    path: /server/{id}
+    defaults: {_controller: AppBundle:Default:singlePage, id: null}
+    options: {expose: true}
+
+# Catch-all route for single page app
+single-page:
+    path: /{url}
+    defaults:
+        url: index
+        _controller: AppBundle:Default:singlePage
+    requirements:
+        url: .+
+    options: {expose: true}

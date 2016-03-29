@@ -1,0 +1,25 @@
+{% form_theme form _self %}
+
+{% block form_row %}
+    {%- set type = type|default('text') -%}
+    <FormInput type="{{ type }}" {{ block('widget_attributes') }} {% if value is defined %}value="{{ value }}" {% endif %} label="{{ label }}" }}/>
+{% endblock form_row %}
+{#
+{%- block form_label -%}
+    {% if label is not same as(false) -%}
+        {% if label is empty -%}
+            {%- if label_format is not empty -%}
+                {% set label = label_format|replace({
+                    '%name%': name,
+                    '%id%': id,
+                }) %}
+            {%- else -%}
+                {% set label = name|humanize %}
+            {%- endif -%}
+        {%- endif -%}
+        label="{% for attrname, attrvalue in label_attr %} {{ attrname }}="{{ attrvalue }}"{% endfor %}>{{ translation_domain is same as(false) ? label : label|trans({}, translation_domain) }}"
+    {%- endif -%}
+{%- endblock form_label -%}
+#}
+{{ dump(form) }}
+{#}{ form_widget(form) }#}
