@@ -845,20 +845,17 @@
             this.open();
         }
 
-        handleSubmit(event) {
-            event.preventDefault();
-            var form = event.target;
-            var formdata = new FormData(form);
-            var data = {};
-            for (var entry of formdata.keys()) {
-                data[entry] = formdata.get(entry);
-            }
-            this.props.onSave(data);
+        save() {
+            // onSave should return a Promise
+            let self = this;
+            this.props.onSave().then(this.close.bind(this)).catch(function (msg) {
+                self.setState({ message: msg.message });
+            });
         }
 
         render() {
             var close = this.close.bind(this);
-            var handleSubmit = this.handleSubmit.bind(this);
+            var save = this.save.bind(this);
             return React.createElement(
                 'div',
                 { id: 'modal', className: 'modal fade', ref: d => this._dialog = d },
@@ -904,7 +901,7 @@
                                 { type: 'button', className: 'btn btn-secondary', onClick: close },
                                 'Close'
                             ),
-                            React.createElement('input', { type: 'submit', className: 'btn btn-primary', value: 'Save', onClick: '' })
+                            React.createElement('input', { type: 'button', className: 'btn btn-primary', value: 'Save', onClick: save })
                         )
                     )
                 )
@@ -913,72 +910,94 @@
     };
 
     var AppForm = class AppForm extends React.Component {
+        constructor(props) {
+            super(props);
+            // Create a new app object using the existing one as a prototype
+            let newApp = Object.create(props.app);
+            this.state = { 'app': newApp, 'errors': {} };
+            // Define a container for the form ref
+            this.form = null;
+        }
+
+        handleChange(event) {
+            let name = event.target.name;
+            let value = event.target.value;
+            this.setState(function (state) {
+                state.app[name] = value;return state;
+            });
+        }
+
         handleSubmit(event) {
             event.preventDefault();
-            var form = event.target;
-            var formdata = new FormData(form);
-            var data = {};
-            for (var entry of formdata.keys()) {
-                data[entry] = formdata.get(entry);
-            }
-            this.props.onSave(data);
+            this.save();
+        }
+
+        save() {
+            // onSave() should return a Promise
+            let self = this;
+            return this.props.onSave(this.state.app).catch(function (response) {
+                self.setState({ errors: response.errors && response.errors.children ? response.errors.children : {} });
+            });
         }
 
         render() {
             let handleSubmit = this.handleSubmit.bind(this);
-            let app = this.props.app;
+            let app = this.state.app;
             return React.createElement(
-                'form',
-                { onSubmit: handleSubmit },
-                React.createElement(FormInput, { name: 'name', value: app.name, formName: 'app', label: 'Name' }),
-                React.createElement(FormSelect, { name: 'type', value: app.type, formName: 'app', label: 'Type', options: { internal: "Internal", vendor: "Vendor", cloud: "Cloud", wrong: "Invalid" } }),
-                React.createElement(FormInput, { name: 'info', value: app.info, formName: 'app', label: 'Extra info' })
-            );
-        }
-    };
-
-    var FormInput = class FormInput extends React.Component {
-        render() {
-            var props = this.props;
-            var id = props.formName + '-' + props.name;
-            return React.createElement(
-                'fieldset',
-                { className: 'form-group' },
+                ModalDialog,
+                { title: this.props.app.name ? 'Edit ' + this.props.app.name : 'New app', onSave: this.save.bind(this) },
                 React.createElement(
-                    'label',
-                    { labelFor: id },
-                    props.label
-                ),
-                React.createElement('input', { type: props.type, className: 'form-control', name: name, id: id, defaultValue: this.props.value })
-            );
-        }
-    };
-    FormInput.defaultProps = { type: "text", value: null };
-
-    var FormSelect = class FormSelect extends React.Component {
-        render() {
-            var props = this.props;
-            var id = props.formName + '-' + props.name;
-            return React.createElement(
-                'fieldset',
-                { className: 'form-group' },
-                React.createElement(
-                    'label',
-                    { labelFor: id },
-                    props.label
-                ),
-                React.createElement(
-                    'select',
-                    { className: 'form-control', name: name, id: id },
-                    Object.keys(props.options).map(value => React.createElement(
-                        'option',
-                        { key: value, value: value },
-                        props.options[value]
-                    ))
+                    'form',
+                    { onSubmit: handleSubmit, onChange: this.handleChange.bind(this), ref: e => this.form = e },
+                    React.createElement(FormInput, { name: 'name', value: app.name, formName: 'app', label: 'Name', errors: this.state.errors.name }),
+                    React.createElement(FormSelect, { name: 'type', value: app.type, formName: 'app', label: 'Type', options: { internal: "Internal", vendor: "Vendor", cloud: "Cloud", wrong: "Invalid" }, errors: this.state.errors.type }),
+                    React.createElement(FormInput, { name: 'info', value: app.info, formName: 'app', label: 'Extra info', errors: this.state.errors.type })
                 )
             );
         }
     };
+
+    var FormInput = props => React.createElement(
+        'fieldset',
+        { className: 'form-group' + (props.errors ? ' has-danger' : '') },
+        React.createElement(
+            'label',
+            { labelFor: props.formName + '-' + props.name },
+            props.label
+        ),
+        React.createElement('input', { type: props.type, className: 'form-control', name: props.name, id: props.formName + '-' + props.name, value: props.value, onChange: props.onChange }),
+        props.errors && props.errors.errors ? props.errors.errors.map((msg, i) => React.createElement(
+            'div',
+            { key: i, className: 'text-help' },
+            msg
+        )) : null
+    );
+    FormInput.defaultProps = { type: "text", value: null, onChange: function () {}, errors: null };
+
+    var FormSelect = props => React.createElement(
+        'fieldset',
+        { className: 'form-group' + (props.errors ? ' has-danger' : '') },
+        React.createElement(
+            'label',
+            { labelFor: props.formName + '-' + props.name },
+            props.label
+        ),
+        React.createElement(
+            'select',
+            { className: 'form-control', name: props.name, value: props.value, id: props.formName + '-' + props.name, onChange: props.onChange },
+            Object.keys(props.options).map(value => React.createElement(
+                'option',
+                { key: value, value: value },
+                props.options[value]
+            ))
+        ),
+        props.errors && props.errors.errors ? props.errors.errors.map((msg, i) => React.createElement(
+            'div',
+            { key: i, className: 'text-help' },
+            msg
+        )) : null
+    );
+    FormSelect.defaultProps = { value: null, onChange: function () {}, errors: null };
 
     var Alert = props => React.createElement(
         'div',

@@ -1,7 +1,9 @@
+'use strict';
+
 $(function () {
     (function router(page, document, headerContainer, contentContainer, navContainer, modalContainer, alertsContainer, appData, ReactDOM, $) {
 
-        var renderApp = function renderApp(title, header, content, activeMenu) {
+        let renderApp = function renderApp(title, header, content, activeMenu) {
             // Title
             document.title = (title ? title + " :: " : "") + "Application Directory";
             // Header
@@ -10,6 +12,17 @@ $(function () {
             ReactDOM.render(content, contentContainer);
             // Active menu item
             ReactDOM.render(React.createElement(NavBar, { active: activeMenu }), navContainer);
+        };
+
+        let saveApp = function saveApp(app) {
+            return new Promise(function (resolve, reject) {
+                console.log(app);
+                let data = { "app": app };
+
+                jQuery.post('/app_dev.php/api/app', data).then(response => resolve(response)).fail(function (jqxhr) {
+                    reject(jqxhr.responseJSON ? jqxhr.responseJSON : { message: 'Failed to send to server' });
+                });
+            });
         };
 
         // Routing
@@ -46,47 +59,45 @@ $(function () {
                 apps.push(appData.app[id]);
             }
 
-            var add = function () {
-                var modal; // The 'ref' will populate this
-
-                var save = function (data) {
-                    console.log(data);
-                    data = { "app": data };
-                    jQuery.post('/app_dev.php/api/app', data).done(function (response) {
-                        // Close and unmount
-                        modal.close(function () {
-                            ReactDOM.unmountComponentAtNode(modalContainer);
-                        });
-
-                        // Display message
-                        ReactDOM.render(React.createElement(
-                            Alert,
-                            { type: "success" },
-                            "App created: ",
-                            response.name
-                        ), alertsContainer);
-                    }).done(function (response) {
-                        var id = response.id;
-                        window.app.data.app[id] = response;
-                    }).fail(function (jqxhr) {
-                        var response = jqxhr.responseJSON;
-                        // Display error message
-                        console.log('Problem');
-                        console.log(response);
-                        modal.setState({ message: response.message });
-                    });
-
-                    // If failure
-                    // Don't close
-                    // Put error message in the form
+            var add = function add() {
+                var save = function save(data) {
+                    return saveApp(data).then(response => ReactDOM.render(React.createElement(
+                        Alert,
+                        { type: "success" },
+                        "App created: ",
+                        response.name
+                    ), alertsContainer));
+                    /*
+                                        return new Promise(function(resolve, reject){
+                                            console.log(data);
+                                            data = {"app": data};
+                    
+                                            jQuery.post('/app_dev.php/api/app', data)
+                                                .done(function(response){
+                                                    // Close and unmount
+                                                    modal.close(function(){ReactDOM.unmountComponentAtNode(modalContainer);});
+                    
+                                                    // Display message
+                    
+                                                })
+                                                .done(function(response){
+                                                    var id = response.id;
+                                                    window.app.data.app[id] = response;
+                                                })
+                                                .fail(function(jqxhr){
+                                                    var response = jqxhr.responseJSON;
+                                                    // Display error message
+                                                    console.log('Problem');
+                                                    console.log(response);
+                                                    reject(reponse.message);
+                                                    //modal.setState({message: response.message});
+                                                });
+                                        })
+                    */
                 };
 
                 // Open the modal for adding an app
-                ReactDOM.render(React.createElement(
-                    ModalDialog,
-                    { title: "New app", onSave: save, ref: c => modal = c },
-                    React.createElement(AppForm, { app: {} })
-                ), modalContainer);
+                ReactDOM.render(React.createElement(AppForm, { app: new app.class.app(), ref: c => modal = c, onSave: save }), modalContainer);
             };
 
             renderApp('Apps', React.createElement(PageHeader, { title: "Apps", button: add, buttonText: "+ Add" }), React.createElement(AppList, { apps: apps }), 'Apps');

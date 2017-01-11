@@ -320,21 +320,22 @@
         componentDidUpdate(){
             this.open();
         }
-        
-        handleSubmit(event){
-            event.preventDefault();
-            var form = event.target;
-            var formdata = new FormData(form);
-            var data = {};
-            for (var entry of formdata.keys()) {
-                data[entry] = formdata.get(entry);
-            }
-            this.props.onSave(data);
+
+        save(){
+            // onSave should return a Promise
+            let self = this;
+            this.props.onSave()
+                .then(this.close.bind(this))
+                .catch(
+                    function(msg){
+                        self.setState({message: msg.message})
+                    }
+                );
         }
-        
+
         render() {
             var close = this.close.bind(this);
-            var handleSubmit = this.handleSubmit.bind(this);
+            var save = this.save.bind(this);
             return (
                 <div id="modal" className="modal fade" ref={(d)=>this._dialog=d}>
                     <div className="modal-dialog" role="document">
@@ -351,7 +352,7 @@
                             </div>
                             <div className="modal-footer">
                                 <button type="button" className="btn btn-secondary" onClick={close}>Close</button>
-                                <input type="submit" className="btn btn-primary" value="Save" onClick=""/>
+                                <input type="button" className="btn btn-primary" value="Save" onClick={save}/>
                             </div>
                         </div>
                     </div>
@@ -361,62 +362,72 @@
     };
     
     var AppForm = class AppForm extends React.Component {
+        constructor(props) {
+            super(props);
+            // Create a new app object using the existing one as a prototype
+            let newApp = Object.create(props.app);
+            this.state = {'app': newApp, 'errors': {}};
+            // Define a container for the form ref
+            this.form = null;
+        }
+
+        handleChange(event) {
+            let name = event.target.name;
+            let value = event.target.value;
+            this.setState(function(state){state.app[name] = value; return state;});
+        }
+
         handleSubmit(event){
             event.preventDefault();
-            var form = event.target;
-            var formdata = new FormData(form);
-            var data = {};
-            for (var entry of formdata.keys()) {
-                data[entry] = formdata.get(entry);
-            }
-            this.props.onSave(data);
+            this.save();
+        }
+
+        save(){
+            // onSave() should return a Promise
+            let self = this;
+            return this.props.onSave(this.state.app)
+                .catch(function(response){
+                    self.setState({errors: response.errors && response.errors.children ? response.errors.children : {}});
+                });
         }
 
         render() {
             let handleSubmit = this.handleSubmit.bind(this);
-            let app = this.props.app;
+            let app = this.state.app;
             return (
-                <form onSubmit={handleSubmit}>
-                    <FormInput name="name"  value={app.name} formName="app" label="Name"/>
-                    <FormSelect name="type" value={app.type} formName="app" label="Type" options={{internal: "Internal", vendor: "Vendor", cloud: "Cloud", wrong: "Invalid"}}/>
-                    <FormInput name="info" value={app.info} formName="app" label="Extra info"/>
-                </form>
+                <ModalDialog title={this.props.app.name ? 'Edit '+this.props.app.name : 'New app'} onSave={this.save.bind(this)}>
+                    <form onSubmit={handleSubmit} onChange={this.handleChange.bind(this)} ref={(e)=>this.form=e}>
+                        <FormInput name="name" value={app.name} formName="app" label="Name" errors={this.state.errors.name}/>
+                        <FormSelect name="type" value={app.type} formName="app" label="Type" options={{internal: "Internal", vendor: "Vendor", cloud: "Cloud", wrong: "Invalid"}} errors={this.state.errors.type}/>
+                        <FormInput name="info" value={app.info} formName="app" label="Extra info" errors={this.state.errors.type}/>
+                    </form>
+                </ModalDialog>
             )
         }
     };
 
-    var FormInput = class FormInput extends React.Component {
-        value: null,
 
-        render() {
-            let props = this.props;
-            let id = props.formName+'-'+props.name;
-            this.value = this.props.value;
-            return (
-                <fieldset className="form-group">
-                    <label labelFor={id}>{props.label}</label>
-                    <input type={props.type} className="form-control" name={name} id={id} value={this.value} onChange={(evt)=>this.value = evt.target.value}/>
-                </fieldset>
-            );
-        }
-    };
-    FormInput.defaultProps = {type: "text", value: null};
+    var FormInput = (props)=>
+        <fieldset className={'form-group' + (props.errors ? ' has-danger' : '')}>
+            <label labelFor={props.formName+'-'+props.name}>{props.label}</label>
+            <input type={props.type} className="form-control" name={props.name} id={props.formName+'-'+props.name} value={props.value} onChange={props.onChange}/>
+            {props.errors && props.errors.errors ? props.errors.errors.map((msg, i)=><div key={i} className="text-help">{msg}</div>) : null}
+        </fieldset>
+    ;
+    FormInput.defaultProps = {type: "text", value: null, onChange: function(){}, errors: null};
 
-    var FormSelect = class FormSelect extends React.Component {
-        render() {
-            var props = this.props;
-            var id = props.formName + '-' + props.name;
-            return (
-                <fieldset className="form-group">
-                    <label labelFor={id}>{props.label}</label>
-                    <select className="form-control" name={name} id={id}>
-                        {Object.keys(props.options).map((value) => (
-                            <option key={value} value={value}>{props.options[value]}</option>))}
-                    </select>
-                </fieldset>
-            );
-        }
-    };
+
+    var FormSelect = (props)=>
+        <fieldset className={'form-group' + (props.errors ? ' has-danger' : '')}>
+            <label labelFor={props.formName+'-'+props.name}>{props.label}</label>
+            <select className="form-control" name={props.name} value={props.value} id={props.formName+'-'+props.name} onChange={props.onChange}>
+                {Object.keys(props.options).map((value) => (
+                    <option key={value} value={value}>{props.options[value]}</option>))}
+            </select>
+            {props.errors && props.errors.errors ? props.errors.errors.map((msg, i)=><div key={i} className="text-help">{msg}</div>) : null}
+        </fieldset>
+    ;
+    FormSelect.defaultProps = {value: null, onChange: function(){}, errors: null}
     
     var Alert = (props)=>(
         <div className={"alert alert-dismissable fade in alert-" + props.type} role="alert">

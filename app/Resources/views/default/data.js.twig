@@ -21,6 +21,7 @@ window.app = (function() {
             }
         }
     };
+    Object.defineProperty(DataObject.prototype, 'init', {enumerable: false});
 
     // Define the actual types
     {% for typename, type in templates %}

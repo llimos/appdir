@@ -1,7 +1,9 @@
+'use strict';
+
 $(function(){
     (function router(page, document, headerContainer, contentContainer, navContainer, modalContainer, alertsContainer, appData, ReactDOM, $){
 
-        var renderApp = function renderApp (title, header, content, activeMenu){
+        let renderApp = function renderApp (title, header, content, activeMenu){
             // Title
             document.title = (title ? title + " :: " : "") + "Application Directory";
             // Header
@@ -10,6 +12,19 @@ $(function(){
             ReactDOM.render(content, contentContainer);
             // Active menu item
             ReactDOM.render(<NavBar active={activeMenu}/>, navContainer);
+        };
+
+        let saveApp = function saveApp(app) {
+            return new Promise(function (resolve, reject) {
+                console.log(app);
+                let data = {"app": app};
+
+                jQuery.post('/app_dev.php/api/app', data)
+                    .then((response)=>resolve(response))
+                    .fail(function(jqxhr){
+                        reject(jqxhr.responseJSON ? jqxhr.responseJSON : {message: 'Failed to send to server'});
+                    });
+            });
         };
 
         // Routing
@@ -46,41 +61,41 @@ $(function(){
                 apps.push(appData.app[id]);
             }
 
-            var add = function() {
-                var modal; // The 'ref' will populate this
+            var add = function add() {
+                var save = function save(data) {
+                    return saveApp(data)
+                        .then((response)=>ReactDOM.render(<Alert type="success">App created: {response.name}</Alert>, alertsContainer));
+/*
+                    return new Promise(function(resolve, reject){
+                        console.log(data);
+                        data = {"app": data};
 
-                var save = function(data) {
-                    console.log(data);
-                    data = {"app": data};
-                    jQuery.post('/app_dev.php/api/app', data)
-                        .done(function(response){
-                            // Close and unmount
-                            modal.close(function(){ReactDOM.unmountComponentAtNode(modalContainer);});
+                        jQuery.post('/app_dev.php/api/app', data)
+                            .done(function(response){
+                                // Close and unmount
+                                modal.close(function(){ReactDOM.unmountComponentAtNode(modalContainer);});
 
-                            // Display message
-                            ReactDOM.render(<Alert type="success">App created: {response.name}</Alert>, alertsContainer);
-                        })
-                        .done(function(response){
-                            var id = response.id;
-                            window.app.data.app[id] = response;
-                        })
-                        .fail(function(jqxhr){
-                            var response = jqxhr.responseJSON;
-                            // Display error message
-                            console.log('Problem');
-                            console.log(response);
-                            modal.setState({message: response.message});
-                        });
+                                // Display message
 
-                    // If failure
-                    // Don't close
-                    // Put error message in the form
+                            })
+                            .done(function(response){
+                                var id = response.id;
+                                window.app.data.app[id] = response;
+                            })
+                            .fail(function(jqxhr){
+                                var response = jqxhr.responseJSON;
+                                // Display error message
+                                console.log('Problem');
+                                console.log(response);
+                                reject(reponse.message);
+                                //modal.setState({message: response.message});
+                            });
+                    })
+*/
                 }
 
-
-
                 // Open the modal for adding an app
-                ReactDOM.render(<ModalDialog title="New app" onSave={save} ref={(c)=>modal=c} form={<AppForm app={new app.class.app()}}/></ModalDialog>, modalContainer);
+                ReactDOM.render(<AppForm app={new app.class.app()} ref={(c)=>modal=c} onSave={save}/>, modalContainer);
             };
 
             renderApp('Apps', <PageHeader title="Apps" button={add} buttonText="+ Add"/>, <AppList apps={apps}/>, 'Apps');
